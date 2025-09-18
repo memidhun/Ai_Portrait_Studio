@@ -36,14 +36,6 @@
             background-color: #d1d1d6;
             cursor: not-allowed;
         }
-        .btn-secondary {
-            background-color: #e5e5ea;
-            color: #1d1d1f;
-            transition: background-color 0.3s ease;
-        }
-        .btn-secondary:hover {
-            background-color: #dcdce0;
-        }
         .template-card {
             border: 2px solid transparent;
             transition: all 0.3s ease;
@@ -68,13 +60,38 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        /* Hide scrollbar for template gallery */
-        .template-gallery::-webkit-scrollbar {
-            display: none;
+        /* Collapsible Section Styles */
+        .section-content {
+            transition: max-height 0.5s ease-in-out, opacity 0.3s ease-in-out, margin-top 0.5s ease-in-out;
+            overflow: hidden;
+            max-height: 1000px; /* Large enough for content */
         }
-        .template-gallery {
-            -ms-overflow-style: none; /* IE and Edge */
-            scrollbar-width: none; /* Firefox */
+        .section-content.collapsed {
+            margin-top: 0 !important;
+            max-height: 0;
+            opacity: 0;
+        }
+        .chevron-icon {
+            transition: transform 0.3s ease;
+        }
+        .section-header.collapsed .chevron-icon {
+            transform: rotate(-90deg);
+        }
+        
+        /* Glow Animation for Output Image */
+        @keyframes pulse-glow {
+            0% {
+                box-shadow: 0 0 0 0px rgba(0, 122, 255, 0.7), 0 0 5px rgba(0, 122, 255, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 15px rgba(0, 122, 255, 0), 0 0 25px rgba(0, 122, 255, 0.6);
+            }
+            100% {
+                box-shadow: 0 0 0 0px rgba(0, 122, 255, 0), 0 0 5px rgba(0, 122, 255, 0.4);
+            }
+        }
+        .output-glow {
+            animation: pulse-glow 1.5s cubic-bezier(0.19, 1, 0.22, 1);
         }
     </style>
 </head>
@@ -89,37 +106,52 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
             
             <!-- Left Column: Controls -->
-            <div class="flex flex-col space-y-6">
+            <div class="flex flex-col space-y-4">
                 <!-- Step 1: Upload Image -->
-                <div>
-                    <h2 class="text-lg font-semibold text-gray-700 mb-2"><span class="bg-blue-500 text-white rounded-full w-6 h-6 inline-flex items-center justify-center mr-2">1</span> Upload Your Image</h2>
-                    <div id="image-upload-area" class="relative w-full aspect-square bg-gray-100 border-2 border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center text-center p-4 transition-all">
-                        <img id="image-preview" src="" alt="Image Preview" class="hidden absolute inset-0 w-full h-full object-cover rounded-2xl">
-                        <div id="upload-prompt" class="flex flex-col items-center justify-center">
-                            <svg class="w-12 h-12 text-gray-400 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                            </svg>
-                            <p class="text-gray-500 font-medium">Click to upload or drag & drop</p>
-                            <p class="text-xs text-gray-400 mt-1">PNG, JPG, or WEBP</p>
+                <div class="bg-white/90 rounded-2xl p-4 shadow-sm transition-all">
+                    <div id="upload-section-header" class="section-header flex justify-between items-center cursor-pointer">
+                        <h2 class="text-lg font-semibold text-gray-700"><span class="bg-blue-500 text-white rounded-full w-6 h-6 inline-flex items-center justify-center mr-2">1</span> Upload Your Image</h2>
+                        <svg class="chevron-icon w-5 h-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                    </div>
+                    <div id="upload-section-content" class="section-content mt-4">
+                        <div id="image-upload-area" class="relative w-full aspect-square bg-gray-100 border-2 border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center text-center p-2 transition-all">
+                            <div id="upload-prompt" class="flex flex-col items-center justify-center">
+                                <svg class="w-12 h-12 text-gray-400 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 S0 11-.75 0 .375.375 0 01.75 0z" />
+                                </svg>
+                                <p class="text-gray-500 font-medium">Click to upload or drag & drop</p>
+                                <p class="text-xs text-gray-400 mt-1">PNG, JPG, or WEBP</p>
+                            </div>
+                            <img id="upload-preview-image" src="" alt="Uploaded Preview" class="hidden w-full h-full object-contain rounded-xl"/>
+                            <input type="file" id="image-input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/png, image/jpeg, image/webp">
                         </div>
-                        <input type="file" id="image-input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/png, image/jpeg, image/webp">
                     </div>
                 </div>
 
-                <!-- Step 2: Select Template -->
-                <div>
-                    <h2 class="text-lg font-semibold text-gray-700 mb-2"><span class="bg-blue-500 text-white rounded-full w-6 h-6 inline-flex items-center justify-center mr-2">2</span> Select a Style</h2>
-                    <div id="template-gallery" class="template-gallery grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <!-- Templates will be injected here by JavaScript -->
+                <!-- Step 2: Select a Style -->
+                 <div class="bg-white/90 rounded-2xl p-4 shadow-sm transition-all">
+                    <div id="style-section-header" class="section-header flex justify-between items-center cursor-pointer collapsed">
+                        <h2 class="text-lg font-semibold text-gray-700"><span class="bg-blue-500 text-white rounded-full w-6 h-6 inline-flex items-center justify-center mr-2">2</span> Select a Style</h2>
+                        <svg class="chevron-icon w-5 h-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                    </div>
+                    <div id="style-section-content" class="section-content mt-4 collapsed">
+                        <div id="template-gallery" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <!-- Templates will be injected here by JavaScript -->
+                        </div>
                     </div>
                 </div>
 
                  <!-- Step 3: Generate -->
-                 <div>
-                    <h2 class="text-lg font-semibold text-gray-700 mb-2"><span class="bg-blue-500 text-white rounded-full w-6 h-6 inline-flex items-center justify-center mr-2">3</span> Generate</h2>
-                    <button id="generate-btn" class="btn-primary w-full py-3 rounded-xl text-lg font-semibold shadow-lg disabled:shadow-none">
-                        Generate Image
-                    </button>
+                 <div class="bg-white/90 rounded-2xl p-4 shadow-sm transition-all">
+                    <div id="generate-section-header" class="section-header flex justify-between items-center cursor-pointer collapsed">
+                        <h2 class="text-lg font-semibold text-gray-700"><span class="bg-blue-500 text-white rounded-full w-6 h-6 inline-flex items-center justify-center mr-2">3</span> Generate</h2>
+                         <svg class="chevron-icon w-5 h-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                    </div>
+                    <div id="generate-section-content" class="section-content mt-4 collapsed">
+                        <button id="generate-btn" class="btn-primary w-full py-3 rounded-xl text-lg font-semibold shadow-lg disabled:shadow-none">
+                            Generate Image
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -147,7 +179,7 @@
                          <svg class="w-12 h-12 text-red-400 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
                         </svg>
-                        <p id="error-message" class="mt-2 font-medium text-red-600">Something went wrong. Please try again.</p>
+                        <p id="error-message" class="mt-2 font-medium text-red-600"></p>
                     </div>
                 </div>
             </div>
@@ -167,8 +199,8 @@
             // --- DOM ELEMENTS ---
             const imageInput = document.getElementById('image-input');
             const imageUploadArea = document.getElementById('image-upload-area');
-            const imagePreview = document.getElementById('image-preview');
             const uploadPrompt = document.getElementById('upload-prompt');
+            const uploadPreviewImage = document.getElementById('upload-preview-image');
             const templateGallery = document.getElementById('template-gallery');
             const generateBtn = document.getElementById('generate-btn');
             const outputPlaceholder = document.getElementById('output-placeholder');
@@ -178,31 +210,61 @@
             const downloadBtn = document.getElementById('download-btn');
             const errorContainer = document.getElementById('error-container');
             const errorMessage = document.getElementById('error-message');
+            
+            // Section Toggling Elements
+            const sectionHeaders = {
+                upload: document.getElementById('upload-section-header'),
+                style: document.getElementById('style-section-header'),
+                generate: document.getElementById('generate-section-header'),
+            };
+            const sectionContents = {
+                upload: document.getElementById('upload-section-content'),
+                style: document.getElementById('style-section-content'),
+                generate: document.getElementById('generate-section-content'),
+            };
 
             // --- TEMPLATES DATA ---
             const templates = [
-                { id: 'cyberpunk', name: 'Cyberpunk', prompt: 'A cinematic portrait of the person in the image as a cyberpunk character, glowing neon tattoos, futuristic city background with rain and neon signs, high detail.', imageUrl: 'https://placehold.co/300x300/1a1a2e/e0e0ff?text=Cyber' },
-                { id: 'fantasy', name: 'Fantasy Elf', prompt: 'Transform the person in the image into a fantasy elf with pointed ears and intricate silver armor, standing in an enchanted forest with magical lighting.', imageUrl: 'https://placehold.co/300x300/283618/fefae0?text=Fantasy' },
-                { id: 'astronaut', name: 'Astronaut', prompt: 'Depict the person in the image as an astronaut in a modern spacesuit, with the reflection of distant galaxies in their helmet visor, floating in zero-gravity.', imageUrl: 'https://placehold.co/300x300/03071e/ffffff?text=Space' },
-                { id: 'watercolor', name: 'Watercolor', prompt: 'A vibrant and expressive watercolor painting of the person in the image, with soft edges and beautiful color bleeds.', imageUrl: 'https://placehold.co/300x300/e0f2fe/0c4a6e?text=Art' },
-                { id: 'vintage', name: 'Vintage Photo', prompt: 'A classic black and white vintage photograph of the person in the image, from the 1940s, with film grain and soft focus.', imageUrl: 'https://placehold.co/300x300/4a4a4a/ffffff?text=Retro' },
-                { id: 'superhero', name: 'Superhero', prompt: 'Turn the person into a powerful superhero, comic book style, with a dynamic pose, vibrant costume, and an energy aura.', imageUrl: 'https://placehold.co/300x300/dc2626/ffff00?text=Hero' },
+                { id: 'cyberpunk', name: 'Cyberpunk', imageUrl: 'https://placehold.co/300x300/7c0c7a/ffffff?text=Cyberpunk', prompt: 'A portrait of a person in a futuristic, neon-lit cyberpunk city, synthwave aesthetic, detailed, cinematic lighting.' },
+                { id: 'fantasy-art', name: 'Fantasy Art', imageUrl: 'https://placehold.co/300x300/a36e0d/ffffff?text=Fantasy', prompt: 'A fantasy art portrait, digital painting, epic and majestic, with mythical elements in the background, style of a fantasy game.' },
+                { id: 'watercolor', name: 'Watercolor', imageUrl: 'https://placehold.co/300x300/3b82f6/ffffff?text=Watercolor', prompt: 'A delicate watercolor painting of the person, soft edges, vibrant colors, on textured paper.' },
+                { id: 'pop-art', name: 'Pop Art', imageUrl: 'https://placehold.co/300x300/eab308/ffffff?text=Pop+Art', prompt: 'A pop art portrait in the style of Andy Warhol, bold colors, screenprint look, graphic and vibrant.' },
+                { id: 'starlight', name: 'Starlight', imageUrl: 'https://placehold.co/300x300/1e293b/ffffff?text=Starlight', prompt: 'The person\'s portrait made of constellations and stardust, cosmic and ethereal, deep space background.' },
+                { id: 'vintage', name: 'Vintage Photo', imageUrl: 'https://placehold.co/300x300/8c7a6b/ffffff?text=Vintage', prompt: 'An old-fashioned, sepia-toned vintage photograph from the 1920s, grainy, with classic attire.' }
             ];
-            
+
             // --- UI UPDATE FUNCTIONS ---
             const render = () => {
                 // Update Generate Button
                 generateBtn.disabled = !(state.uploadedImageBase64 && state.selectedTemplateId && !state.isGenerating);
                 
                 // Update Output Area
-                outputPlaceholder.classList.toggle('hidden', state.isGenerating || !!resultImage.src || !!errorMessage.textContent);
+                const hasError = errorMessage.textContent.trim() !== "";
+                const hasResult = resultImage.src.trim() !== "";
+
+                outputPlaceholder.classList.toggle('hidden', state.isGenerating || hasResult || hasError);
                 loader.classList.toggle('hidden', !state.isGenerating);
-                resultContainer.classList.toggle('hidden', !resultImage.src || state.isGenerating);
-                errorContainer.classList.toggle('hidden', !errorMessage.textContent || state.isGenerating);
+                resultContainer.classList.toggle('hidden', state.isGenerating || !hasResult || hasError);
+                errorContainer.classList.toggle('hidden', state.isGenerating || !hasError);
 
                 if (state.isGenerating) {
                      resultImage.src = "";
                      errorMessage.textContent = "";
+                     resultImage.classList.remove('output-glow');
+                }
+            };
+
+            const toggleSection = (sectionName) => {
+                const header = sectionHeaders[sectionName];
+                const content = sectionContents[sectionName];
+                const isCollapsed = header.classList.contains('collapsed');
+
+                if (isCollapsed) {
+                    header.classList.remove('collapsed');
+                    content.classList.remove('collapsed');
+                } else {
+                    header.classList.add('collapsed');
+                    content.classList.add('collapsed');
                 }
             };
 
@@ -211,13 +273,20 @@
                 if (file && file.type.startsWith('image/')) {
                     const reader = new FileReader();
                     reader.onload = (e) => {
-                        state.uploadedImageBase64 = e.target.result.split(',')[1];
+                        const imageUrl = e.target.result;
+                        state.uploadedImageBase64 = imageUrl.split(',')[1];
                         state.uploadedImageType = file.type;
                         
-                        imagePreview.src = e.target.result;
-                        imagePreview.classList.remove('hidden');
+                        // Show preview in the upload area
+                        uploadPreviewImage.src = imageUrl;
+                        uploadPreviewImage.classList.remove('hidden');
                         uploadPrompt.classList.add('hidden');
-                        imageUploadArea.classList.add('border-solid', 'border-blue-500');
+                        imageUploadArea.classList.remove('border-dashed', 'bg-gray-100');
+                        imageUploadArea.classList.add('p-0');
+
+                        // Guide the user to the next step
+                        toggleSection('upload');
+                        toggleSection('style');
                         
                         render();
                     };
@@ -225,26 +294,16 @@
                 }
             };
 
-            imageInput.addEventListener('change', (e) => {
-                handleImageUpload(e.target.files[0]);
-            });
+            imageInput.addEventListener('change', (e) => { handleImageUpload(e.target.files[0]); });
             
             // Drag and drop functionality
-            imageUploadArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                imageUploadArea.classList.add('bg-gray-200');
-            });
-            imageUploadArea.addEventListener('dragleave', (e) => {
-                e.preventDefault();
-                imageUploadArea.classList.remove('bg-gray-200');
-            });
+            imageUploadArea.addEventListener('dragover', (e) => { e.preventDefault(); imageUploadArea.classList.add('bg-gray-200'); });
+            imageUploadArea.addEventListener('dragleave', (e) => { e.preventDefault(); imageUploadArea.classList.remove('bg-gray-200'); });
             imageUploadArea.addEventListener('drop', (e) => {
                 e.preventDefault();
                 imageUploadArea.classList.remove('bg-gray-200');
                 const files = e.dataTransfer.files;
-                if (files.length > 0) {
-                    handleImageUpload(files[0]);
-                }
+                if (files.length > 0) handleImageUpload(files[0]);
             });
 
             const handleTemplateSelect = (templateId) => {
@@ -252,6 +311,10 @@
                 document.querySelectorAll('.template-card').forEach(card => {
                     card.classList.toggle('selected', card.dataset.id === templateId);
                 });
+                // Guide user to final step
+                if (!sectionHeaders.generate.classList.contains('collapsed')) return;
+                toggleSection('style');
+                toggleSection('generate');
                 render();
             };
 
@@ -259,8 +322,6 @@
                 if (generateBtn.disabled) return;
                 
                 state.isGenerating = true;
-                errorMessage.textContent = "";
-                resultImage.src = "";
                 render();
 
                 const selectedTemplate = templates.find(t => t.id === state.selectedTemplateId);
@@ -276,6 +337,13 @@
                     const imageUrl = `data:image/png;base64,${generatedBase64}`;
                     resultImage.src = imageUrl;
                     downloadBtn.href = imageUrl;
+                    
+                    // Add glow animation
+                    resultImage.classList.add('output-glow');
+                    resultImage.addEventListener('animationend', () => {
+                        resultImage.classList.remove('output-glow');
+                    }, { once: true });
+
                 } catch (error) {
                     console.error("API call failed:", error);
                     errorMessage.textContent = error.message || "Failed to generate image. Please try again later.";
@@ -289,23 +357,13 @@
             async function callImageGenerationAPI(prompt) {
                 const apiKey = ""; // API key is handled by the environment
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
-
                 const payload = {
-                    contents: [{
-                        parts: [
-                            { text: prompt },
-                            { inlineData: { mimeType: state.uploadedImageType, data: state.uploadedImageBase64 } }
-                        ]
-                    }],
-                    generationConfig: {
-                        responseModalities: ['IMAGE']
-                    },
+                    contents: [{ parts: [ { text: prompt }, { inlineData: { mimeType: state.uploadedImageType, data: state.uploadedImageBase64 } } ] }],
+                    generationConfig: { responseModalities: ['IMAGE'] },
                 };
-                
                 let attempt = 0;
                 const maxAttempts = 5;
                 const initialDelay = 1000;
-
                 while(attempt < maxAttempts) {
                     try {
                         const response = await fetch(apiUrl, {
@@ -313,27 +371,18 @@
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload)
                         });
-
                         if (!response.ok) {
                              const errorBody = await response.json();
                              console.error('API Error Response:', errorBody);
                              throw new Error(`API error: ${errorBody.error?.message || response.statusText}`);
                         }
-
                         const result = await response.json();
                         const base64Data = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
-
-                        if (!base64Data) {
-                            throw new Error("No image data found in API response.");
-                        }
-                        
+                        if (!base64Data) throw new Error("No image data found in API response.");
                         return base64Data;
-
                     } catch(error) {
                         attempt++;
-                        if (attempt >= maxAttempts) {
-                            throw error;
-                        }
+                        if (attempt >= maxAttempts) throw error;
                         const delay = initialDelay * Math.pow(2, attempt);
                         console.log(`API call failed, retrying in ${delay}ms...`);
                         await new Promise(resolve => setTimeout(resolve, delay));
@@ -355,6 +404,10 @@
                     card.addEventListener('click', () => handleTemplateSelect(card.dataset.id));
                 });
 
+                Object.keys(sectionHeaders).forEach(key => {
+                    sectionHeaders[key].addEventListener('click', () => toggleSection(key));
+                });
+
                 render();
             };
 
@@ -363,3 +416,4 @@
     </script>
 </body>
 </html>
+
