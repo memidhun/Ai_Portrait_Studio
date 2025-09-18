@@ -3,11 +3,27 @@
 // Vercel will automatically detect and deploy it as a serverless function.
 
 export default async function handler(req, res) {
-    // 1. Set CORS headers to allow requests from your GitHub Pages site
-    // IMPORTANT: Replace 'https://your-github-username.github.io' with your actual GitHub Pages URL.
-    res.setHeader('Access-Control-Allow-Origin', '*'); // For development, '*' is okay. For production, restrict it.
+    // 1. Define a whitelist of allowed origins
+    // This is a more secure and flexible approach for CORS.
+    const allowedOrigins = [
+      process.env.FRONTEND_URL, // Your main production URL from Vercel env vars
+      'http://localhost:3000', // For local development
+      'http://127.0.0.1:5500' // For running with Live Server
+    ];
+  
+    // Vercel automatically creates preview URLs. This logic allows them.
+    if (process.env.VERCEL_URL && req.headers.origin?.endsWith('.vercel.app')) {
+      allowedOrigins.push(req.headers.origin);
+    }
+  
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+    
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Vary', 'Origin');
   
     // 2. Handle preflight OPTIONS requests for CORS
     if (req.method === 'OPTIONS') {
@@ -17,6 +33,7 @@ export default async function handler(req, res) {
     
     // 3. Ensure the request is a POST request
     if (req.method !== 'POST') {
+      res.setHeader('Allow', ['POST', 'OPTIONS']);
       res.status(405).json({ error: 'Method Not Allowed' });
       return;
     }
@@ -40,7 +57,6 @@ export default async function handler(req, res) {
         headers: {
           'Content-Type': 'application/json',
         },
-        // The body from your frontend `fetch` call is in `req.body`
         body: JSON.stringify(req.body), 
       });
   
