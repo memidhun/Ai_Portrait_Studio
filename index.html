@@ -356,7 +356,7 @@
             // --- API CALL LOGIC ---
             async function callImageGenerationAPI(prompt) {
                 // IMPORTANT: Replace this placeholder with your actual Vercel deployment URL
-                const apiUrl = "https://your-vercel-project-url.vercel.app/api/generate-image"; 
+                const apiUrl = "https://ai-portrait-studio-five.vercel.app/"; 
 
                 const payload = {
                     contents: [{ parts: [ { text: prompt }, { inlineData: { mimeType: state.uploadedImageType, data: state.uploadedImageBase64 } } ] }],
