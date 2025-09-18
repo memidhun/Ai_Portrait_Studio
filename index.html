@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Portrait Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom Styles for an Apple-inspired look and feel */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f5f5f7;
+            color: #1d1d1f;
+        }
+        .main-container {
+            min-height: calc(100vh - 80px); /* Full viewport height minus header */
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .btn-primary {
+            background-color: #007aff;
+            color: white;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        .btn-primary:hover {
+            background-color: #005ecb;
+        }
+        .btn-primary:disabled {
+            background-color: #d1d1d6;
+            cursor: not-allowed;
+        }
+        .btn-secondary {
+            background-color: #e5e5ea;
+            color: #1d1d1f;
+            transition: background-color 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background-color: #dcdce0;
+        }
+        .template-card {
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .template-card.selected {
+            border-color: #007aff;
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #d1d1d6;
+            border-bottom-color: #007aff;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Hide scrollbar for template gallery */
+        .template-gallery::-webkit-scrollbar {
+            display: none;
+        }
+        .template-gallery {
+            -ms-overflow-style: none; /* IE and Edge */
+            scrollbar-width: none; /* Firefox */
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <header class="bg-white/80 backdrop-blur-sm sticky top-0 z-20 border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <h1 class="text-2xl font-bold text-center text-gray-800 tracking-tight">AI Portrait Studio</h1>
+        </div>
+    </header>
+
+    <main class="main-container w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+            
+            <!-- Left Column: Controls -->
+            <div class="flex flex-col space-y-6">
+                <!-- Step 1: Upload Image -->
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-700 mb-2"><span class="bg-blue-500 text-white rounded-full w-6 h-6 inline-flex items-center justify-center mr-2">1</span> Upload Your Image</h2>
+                    <div id="image-upload-area" class="relative w-full aspect-square bg-gray-100 border-2 border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center text-center p-4 transition-all">
+                        <img id="image-preview" src="" alt="Image Preview" class="hidden absolute inset-0 w-full h-full object-cover rounded-2xl">
+                        <div id="upload-prompt" class="flex flex-col items-center justify-center">
+                            <svg class="w-12 h-12 text-gray-400 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                            </svg>
+                            <p class="text-gray-500 font-medium">Click to upload or drag & drop</p>
+                            <p class="text-xs text-gray-400 mt-1">PNG, JPG, or WEBP</p>
+                        </div>
+                        <input type="file" id="image-input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/png, image/jpeg, image/webp">
+                    </div>
+                </div>
+
+                <!-- Step 2: Select Template -->
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-700 mb-2"><span class="bg-blue-500 text-white rounded-full w-6 h-6 inline-flex items-center justify-center mr-2">2</span> Select a Style</h2>
+                    <div id="template-gallery" class="template-gallery grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <!-- Templates will be injected here by JavaScript -->
+                    </div>
+                </div>
+
+                 <!-- Step 3: Generate -->
+                 <div>
+                    <h2 class="text-lg font-semibold text-gray-700 mb-2"><span class="bg-blue-500 text-white rounded-full w-6 h-6 inline-flex items-center justify-center mr-2">3</span> Generate</h2>
+                    <button id="generate-btn" class="btn-primary w-full py-3 rounded-xl text-lg font-semibold shadow-lg disabled:shadow-none">
+                        Generate Image
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Column: Output -->
+            <div class="flex flex-col items-center justify-center glass-card rounded-2xl p-4 lg:p-6 min-h-[400px] lg:min-h-0">
+                <div id="output-container" class="w-full h-full flex flex-col items-center justify-center">
+                    <div id="output-placeholder" class="text-center">
+                         <svg class="w-16 h-16 text-gray-400 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.898 20.572L16.5 21.75l-.398-1.178a3.375 3.375 0 00-2.455-2.455L12.75 18l1.178-.398a3.375 3.375 0 002.455-2.455L16.5 14.25l.398 1.178a3.375 3.375 0 002.455 2.455L20.25 18l-1.178.398a3.375 3.375 0 00-2.455 2.455z" />
+                        </svg>
+                        <h3 class="mt-2 text-lg font-medium text-gray-600">Your creation will appear here</h3>
+                        <p class="mt-1 text-sm text-gray-500">Upload an image and pick a style to begin</p>
+                    </div>
+                    <div id="loader" class="hidden text-center">
+                        <div class="loader mx-auto"></div>
+                        <p class="mt-4 text-gray-600 font-medium">Generating your masterpiece...</p>
+                    </div>
+                    <div id="result-container" class="hidden w-full text-center">
+                        <img id="result-image" src="" alt="Generated Image" class="w-full max-w-lg mx-auto rounded-2xl shadow-2xl mb-4">
+                         <a id="download-btn" href="#" download="ai-portrait.png" class="btn-primary inline-block px-8 py-3 rounded-xl text-lg font-semibold shadow-lg">
+                            Download
+                        </a>
+                    </div>
+                    <div id="error-container" class="hidden text-center p-4">
+                         <svg class="w-12 h-12 text-red-400 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                        </svg>
+                        <p id="error-message" class="mt-2 font-medium text-red-600">Something went wrong. Please try again.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- STATE MANAGEMENT ---
+            const state = {
+                uploadedImageBase64: null,
+                uploadedImageType: null,
+                selectedTemplateId: null,
+                isGenerating: false,
+            };
+
+            // --- DOM ELEMENTS ---
+            const imageInput = document.getElementById('image-input');
+            const imageUploadArea = document.getElementById('image-upload-area');
+            const imagePreview = document.getElementById('image-preview');
+            const uploadPrompt = document.getElementById('upload-prompt');
+            const templateGallery = document.getElementById('template-gallery');
+            const generateBtn = document.getElementById('generate-btn');
+            const outputPlaceholder = document.getElementById('output-placeholder');
+            const loader = document.getElementById('loader');
+            const resultContainer = document.getElementById('result-container');
+            const resultImage = document.getElementById('result-image');
+            const downloadBtn = document.getElementById('download-btn');
+            const errorContainer = document.getElementById('error-container');
+            const errorMessage = document.getElementById('error-message');
+
+            // --- TEMPLATES DATA ---
+            const templates = [
+                { id: 'cyberpunk', name: 'Cyberpunk', prompt: 'A cinematic portrait of the person in the image as a cyberpunk character, glowing neon tattoos, futuristic city background with rain and neon signs, high detail.', imageUrl: 'https://placehold.co/300x300/1a1a2e/e0e0ff?text=Cyber' },
+                { id: 'fantasy', name: 'Fantasy Elf', prompt: 'Transform the person in the image into a fantasy elf with pointed ears and intricate silver armor, standing in an enchanted forest with magical lighting.', imageUrl: 'https://placehold.co/300x300/283618/fefae0?text=Fantasy' },
+                { id: 'astronaut', name: 'Astronaut', prompt: 'Depict the person in the image as an astronaut in a modern spacesuit, with the reflection of distant galaxies in their helmet visor, floating in zero-gravity.', imageUrl: 'https://placehold.co/300x300/03071e/ffffff?text=Space' },
+                { id: 'watercolor', name: 'Watercolor', prompt: 'A vibrant and expressive watercolor painting of the person in the image, with soft edges and beautiful color bleeds.', imageUrl: 'https://placehold.co/300x300/e0f2fe/0c4a6e?text=Art' },
+                { id: 'vintage', name: 'Vintage Photo', prompt: 'A classic black and white vintage photograph of the person in the image, from the 1940s, with film grain and soft focus.', imageUrl: 'https://placehold.co/300x300/4a4a4a/ffffff?text=Retro' },
+                { id: 'superhero', name: 'Superhero', prompt: 'Turn the person into a powerful superhero, comic book style, with a dynamic pose, vibrant costume, and an energy aura.', imageUrl: 'https://placehold.co/300x300/dc2626/ffff00?text=Hero' },
+            ];
+            
+            // --- UI UPDATE FUNCTIONS ---
+            const render = () => {
+                // Update Generate Button
+                generateBtn.disabled = !(state.uploadedImageBase64 && state.selectedTemplateId && !state.isGenerating);
+                
+                // Update Output Area
+                outputPlaceholder.classList.toggle('hidden', state.isGenerating || !!resultImage.src || !!errorMessage.textContent);
+                loader.classList.toggle('hidden', !state.isGenerating);
+                resultContainer.classList.toggle('hidden', !resultImage.src || state.isGenerating);
+                errorContainer.classList.toggle('hidden', !errorMessage.textContent || state.isGenerating);
+
+                if (state.isGenerating) {
+                     resultImage.src = "";
+                     errorMessage.textContent = "";
+                }
+            };
+
+            // --- EVENT HANDLERS ---
+            const handleImageUpload = (file) => {
+                if (file && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        state.uploadedImageBase64 = e.target.result.split(',')[1];
+                        state.uploadedImageType = file.type;
+                        
+                        imagePreview.src = e.target.result;
+                        imagePreview.classList.remove('hidden');
+                        uploadPrompt.classList.add('hidden');
+                        imageUploadArea.classList.add('border-solid', 'border-blue-500');
+                        
+                        render();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            imageInput.addEventListener('change', (e) => {
+                handleImageUpload(e.target.files[0]);
+            });
+            
+            // Drag and drop functionality
+            imageUploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                imageUploadArea.classList.add('bg-gray-200');
+            });
+            imageUploadArea.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                imageUploadArea.classList.remove('bg-gray-200');
+            });
+            imageUploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                imageUploadArea.classList.remove('bg-gray-200');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleImageUpload(files[0]);
+                }
+            });
+
+            const handleTemplateSelect = (templateId) => {
+                state.selectedTemplateId = templateId;
+                document.querySelectorAll('.template-card').forEach(card => {
+                    card.classList.toggle('selected', card.dataset.id === templateId);
+                });
+                render();
+            };
+
+            generateBtn.addEventListener('click', async () => {
+                if (generateBtn.disabled) return;
+                
+                state.isGenerating = true;
+                errorMessage.textContent = "";
+                resultImage.src = "";
+                render();
+
+                const selectedTemplate = templates.find(t => t.id === state.selectedTemplateId);
+                if (!selectedTemplate) {
+                    state.isGenerating = false;
+                    errorMessage.textContent = "Please select a valid template.";
+                    render();
+                    return;
+                }
+
+                try {
+                    const generatedBase64 = await callImageGenerationAPI(selectedTemplate.prompt);
+                    const imageUrl = `data:image/png;base64,${generatedBase64}`;
+                    resultImage.src = imageUrl;
+                    downloadBtn.href = imageUrl;
+                } catch (error) {
+                    console.error("API call failed:", error);
+                    errorMessage.textContent = error.message || "Failed to generate image. Please try again later.";
+                } finally {
+                    state.isGenerating = false;
+                    render();
+                }
+            });
+
+            // --- API CALL LOGIC ---
+            async function callImageGenerationAPI(prompt) {
+                const apiKey = ""; // API key is handled by the environment
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
+
+                const payload = {
+                    contents: [{
+                        parts: [
+                            { text: prompt },
+                            { inlineData: { mimeType: state.uploadedImageType, data: state.uploadedImageBase64 } }
+                        ]
+                    }],
+                    generationConfig: {
+                        responseModalities: ['IMAGE']
+                    },
+                };
+                
+                let attempt = 0;
+                const maxAttempts = 5;
+                const initialDelay = 1000;
+
+                while(attempt < maxAttempts) {
+                    try {
+                        const response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (!response.ok) {
+                             const errorBody = await response.json();
+                             console.error('API Error Response:', errorBody);
+                             throw new Error(`API error: ${errorBody.error?.message || response.statusText}`);
+                        }
+
+                        const result = await response.json();
+                        const base64Data = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+
+                        if (!base64Data) {
+                            throw new Error("No image data found in API response.");
+                        }
+                        
+                        return base64Data;
+
+                    } catch(error) {
+                        attempt++;
+                        if (attempt >= maxAttempts) {
+                            throw error;
+                        }
+                        const delay = initialDelay * Math.pow(2, attempt);
+                        console.log(`API call failed, retrying in ${delay}ms...`);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                    }
+                }
+            }
+
+            // --- INITIALIZATION ---
+            const init = () => {
+                templateGallery.innerHTML = templates.map(template => `
+                    <div class="template-card aspect-square rounded-xl overflow-hidden shadow-md relative group" data-id="${template.id}">
+                        <img src="${template.imageUrl}" alt="${template.name}" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all"></div>
+                        <p class="absolute bottom-2 left-2 text-white font-semibold text-sm">${template.name}</p>
+                    </div>
+                `).join('');
+                
+                document.querySelectorAll('.template-card').forEach(card => {
+                    card.addEventListener('click', () => handleTemplateSelect(card.dataset.id));
+                });
+
+                render();
+            };
+
+            init();
+        });
+    </script>
+</body>
+</html>
