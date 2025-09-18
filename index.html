@@ -117,7 +117,7 @@
                         <div id="image-upload-area" class="relative w-full aspect-square bg-gray-100 border-2 border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center text-center p-2 transition-all">
                             <div id="upload-prompt" class="flex flex-col items-center justify-center">
                                 <svg class="w-12 h-12 text-gray-400 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 S0 11-.75 0 .375.375 0 01.75 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 011.5 0 .375.375 0 01-1.5 0z" />
                                 </svg>
                                 <p class="text-gray-500 font-medium">Click to upload or drag & drop</p>
                                 <p class="text-xs text-gray-400 mt-1">PNG, JPG, or WEBP</p>
@@ -355,12 +355,14 @@
 
             // --- API CALL LOGIC ---
             async function callImageGenerationAPI(prompt) {
-                const apiKey = ""; // API key is handled by the environment
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
+                // IMPORTANT: Replace this placeholder with your actual Vercel deployment URL
+                const apiUrl = "https://your-vercel-project-url.vercel.app/api/generate-image"; 
+
                 const payload = {
                     contents: [{ parts: [ { text: prompt }, { inlineData: { mimeType: state.uploadedImageType, data: state.uploadedImageBase64 } } ] }],
                     generationConfig: { responseModalities: ['IMAGE'] },
                 };
+                
                 let attempt = 0;
                 const maxAttempts = 5;
                 const initialDelay = 1000;
@@ -374,9 +376,10 @@
                         if (!response.ok) {
                              const errorBody = await response.json();
                              console.error('API Error Response:', errorBody);
-                             throw new Error(`API error: ${errorBody.error?.message || response.statusText}`);
+                             throw new Error(`API error: ${errorBody.error || response.statusText}`);
                         }
                         const result = await response.json();
+                        // Note the change here: we now expect the backend to forward the Google API response directly
                         const base64Data = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
                         if (!base64Data) throw new Error("No image data found in API response.");
                         return base64Data;
