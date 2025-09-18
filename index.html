@@ -346,7 +346,16 @@
 
                 } catch (error) {
                     console.error("API call failed:", error);
-                    errorMessage.textContent = error.message || "Failed to generate image. Please try again later.";
+                    // Updated error handling to be more specific and helpful
+                    let friendlyErrorMessage = "An unknown error occurred. Please try again.";
+                    if (error.message.includes("Failed to fetch")) {
+                        friendlyErrorMessage = "Network Error: Could not connect to the server. This is often a CORS issue. Please double-check your Vercel Environment Variable `FRONTEND_URL` and ensure it matches your website's URL exactly.";
+                    } else if (error.message.includes("API error")) {
+                        friendlyErrorMessage = `An API error occurred: ${error.message.replace('API error: ', '')}`;
+                    } else {
+                        friendlyErrorMessage = error.message;
+                    }
+                    errorMessage.textContent = friendlyErrorMessage;
                 } finally {
                     state.isGenerating = false;
                     render();
@@ -355,8 +364,19 @@
 
             // --- API CALL LOGIC ---
             async function callImageGenerationAPI(prompt) {
-                // IMPORTANT: Replace this placeholder with your actual Vercel deployment URL
-                const apiUrl = "https://ai-portrait-studio-five.vercel.app/"; 
+                // --- TROUBLESHOOTING 'Failed to fetch' ERRORS ---
+                // This error is almost always a Cross-Origin Resource Sharing (CORS) issue.
+                // It means your backend (on Vercel) is rejecting requests from your frontend.
+                //
+                // TO FIX THIS, YOU MUST CHECK YOUR VERCEL PROJECT SETTINGS:
+                // 1. Go to your Vercel project dashboard for your BACKEND function.
+                // 2. Go to Settings -> Environment Variables.
+                // 3. Ensure you have a variable named `FRONTEND_URL`.
+                // 4. The value of `FRONTEND_URL` MUST EXACTLY MATCH the URL of THIS live website.
+                //    (e.g., https://your-project-name.vercel.app with NO trailing slash).
+                //
+                // Also ensure the URL below is the correct one for your Vercel backend function.
+                const apiUrl = "https://ai-portrait-studio-five.vercel.app/api/generate-image"; 
 
                 const payload = {
                     contents: [{ parts: [ { text: prompt }, { inlineData: { mimeType: state.uploadedImageType, data: state.uploadedImageBase64 } } ] }],
@@ -364,7 +384,7 @@
                 };
                 
                 let attempt = 0;
-                const maxAttempts = 5;
+                const maxAttempts = 3; // Reduced for quicker feedback on persistent errors
                 const initialDelay = 1000;
                 while(attempt < maxAttempts) {
                     try {
@@ -374,12 +394,11 @@
                             body: JSON.stringify(payload)
                         });
                         if (!response.ok) {
-                             const errorBody = await response.json();
+                             const errorBody = await response.json().catch(() => ({ error: { message: "Server returned an invalid error response." } }));
                              console.error('API Error Response:', errorBody);
-                             throw new Error(`API error: ${errorBody.error || response.statusText}`);
+                             throw new Error(`API error: ${errorBody.error?.message || response.statusText}`);
                         }
                         const result = await response.json();
-                        // Note the change here: we now expect the backend to forward the Google API response directly
                         const base64Data = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
                         if (!base64Data) throw new Error("No image data found in API response.");
                         return base64Data;
